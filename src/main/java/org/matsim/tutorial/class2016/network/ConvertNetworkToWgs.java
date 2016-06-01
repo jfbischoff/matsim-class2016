@@ -1,9 +1,10 @@
 /* *********************************************************************** *
- * project: org.matsim.*												   *
+ * project: org.matsim.*
+ * ConvertOsmToMatsim.java
  *                                                                         *
  * *********************************************************************** *
  *                                                                         *
- * copyright       : (C) 2008 by the members listed in the COPYING,        *
+ * copyright       : (C) 2009 by the members listed in the COPYING,        *
  *                   LICENSE and WARRANTY file.                            *
  * email           : info at matsim dot org                                *
  *                                                                         *
@@ -16,33 +17,48 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
-package org.matsim.example;
+
+package org.matsim.tutorial.class2016.network;
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.config.Config;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.network.MatsimNetworkReader;
+import org.matsim.core.network.NetworkWriter;
+import org.matsim.core.network.NodeImpl;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 
 
-public class RunScenario {
-// a comment
+/**
+ * @author jbischoff
+ *
+ */
+public class ConvertNetworkToWgs {
 
+	/**
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		
-		// This loads a default matsim config:
-		Config config = ConfigUtils.loadConfig("path to config");
-
-		//Relative path locations must be relative to the project folder (both in the config and here)
-		config.controler().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
+		String input = "C:/Users/Joschka/Desktop/network.xml";
+		String output = "C:/Users/Joschka/Desktop/networkWGS.xml";
 		
-		// This loads the scenario
-		Scenario scenario = ScenarioUtils.loadScenario(config) ;
+		/* Read the network. */
+		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+		new MatsimNetworkReader(scenario.getNetwork()).parse(input);
+		
+		/* Transform each node. */
+		CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:25833",TransformationFactory.WGS84);
 
-		Controler controler = new Controler( scenario ) ;
-		controler.run();
-
+		for(Node node : scenario.getNetwork().getNodes().values()){
+			((NodeImpl)node).setCoord(ct.transform(node.getCoord()));
+		}
+		
+		/* Write the resulting network. */
+		new NetworkWriter(scenario.getNetwork()).write(output);
+		
 	}
 
 }

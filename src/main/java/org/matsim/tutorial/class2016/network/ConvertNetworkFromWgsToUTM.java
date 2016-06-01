@@ -18,7 +18,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package Network;
+package org.matsim.tutorial.class2016.network;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Node;
@@ -43,7 +43,7 @@ public class ConvertNetworkFromWgsToUTM {
 	public static void main(String[] args) {
 		
 		String input = "C:/Users/Joschka/Desktop/networkWGs.xml";
-		String output = "C:/Users/Joschka/Desktop/network.xml";
+		String output = "C:/Users/Joschka/Desktop/networkUT.xml";
 			
 		/* Read the network. */
 		Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
