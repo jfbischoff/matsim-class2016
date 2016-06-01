@@ -19,12 +19,14 @@ public class KindergartenActivityScoring extends CharyparNagelActivityScoring {
 	
 	@Override
 	public void handleActivity(Activity act) {
+		if (act.getType().equals("pt interaction")) return;
 		this.score += super.calcActScore(act.getStartTime(), act.getEndTime(), act);
 		if (act.getType().startsWith("kindergarten")){
 			if (act.getLinkId().equals(handler.kindergartenLink)){
 				if (handler.arrivedOnLinkByCar.contains(personId)){
-					this.score -= 30.;
+					this.score -= 3000.;
 					handler.arrivedOnLinkByCar.remove(personId);
+					System.out.println(personId + " arrived by car");
 				}
 			}
 		}
