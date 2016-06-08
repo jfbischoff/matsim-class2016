@@ -63,11 +63,14 @@ public class CarTravelDistanceEvaluator implements PersonDepartureEventHandler, 
 
 	@Override
 	public void reset(int event) {
+		 currentTravelDistance = new HashMap<>();
+		 distanceClasses = new int[30];
 		// for post-processing events, this method can be ignored.
 	}
 
 	public int[] getDistanceClasses() {
 		return distanceClasses;
+		
 	}
 
 	private Id<Vehicle> personId2VehicleId(Id<Person> personId) {

@@ -32,6 +32,8 @@ public class KindergartenActivityScoring extends CharyparNagelActivityScoring {
 		}
 		// TODO Auto-generated method stub
 	}
+	
+	
 
 
 }

@@ -74,7 +74,7 @@ public class PostprocessEvents {
 	
 	
 
-	static void writeHistogramData(String filename, int[] distanceClasses) {
+	public static void writeHistogramData(String filename, int[] distanceClasses) {
 		BufferedWriter bw = IOUtils.getBufferedWriter(filename);
 		try {
 			bw.write("distance;rides");

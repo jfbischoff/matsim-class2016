@@ -18,6 +18,7 @@
  * *********************************************************************** */
 package org.matsim.tutorial.class2016.scoring;
 
+import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.population.Activity;
@@ -27,6 +28,8 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.controler.events.IterationEndsEvent;
+import org.matsim.core.controler.listener.IterationEndsListener;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.scoring.ScoringFunction;
 import org.matsim.core.scoring.ScoringFunctionFactory;
@@ -36,6 +39,8 @@ import org.matsim.core.scoring.functions.CharyparNagelAgentStuckScoring;
 import org.matsim.core.scoring.functions.CharyparNagelLegScoring;
 import org.matsim.core.scoring.functions.CharyparNagelMoneyScoring;
 import org.matsim.core.scoring.functions.CharyparNagelScoringParameters;
+import org.matsim.tutorial.class2016.postProcessing.CarTravelDistanceEvaluator;
+import org.matsim.tutorial.class2016.postProcessing.PostprocessEvents;
 import org.matsim.tutorial.class2016.scoring.RunCustomScoringExample.RainOnPersonEvent;
 
 import com.google.inject.Binder;
@@ -51,19 +56,29 @@ public class RunScenarioWithCustomScoring {
 
 		//Relative path locations must be relative to the project folder (both in the config and here)
 		config.controler().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
-		config.controler().setLastIteration(0);
+		config.controler().setLastIteration(10);
 		// This loads the scenario
 		final Scenario scenario = ScenarioUtils.loadScenario(config) ;
 		final KindergartenArrivalHandler kindergartenArrivalHandler = new KindergartenArrivalHandler();
-		
+		final CarTravelDistanceEvaluator carTravelDistanceEvaluator = new CarTravelDistanceEvaluator(scenario.getNetwork());
 		
 		Controler controler = new Controler( scenario ) ;
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
 				addEventHandlerBinding().toInstance(kindergartenArrivalHandler);				
+				addEventHandlerBinding().toInstance(carTravelDistanceEvaluator);
 			}
 		});;
+		
+		controler.addControlerListener(new IterationEndsListener() {
+			
+			@Override
+			public void notifyIterationEnds(IterationEndsEvent event) {
+				PostprocessEvents.writeHistogramData(event.getIteration()+".travelDistances.csv", carTravelDistanceEvaluator.getDistanceClasses()); 
+				Logger.getLogger(getClass()).info("Kids in kindergarten 8142 :"+kindergartenArrivalHandler.kinder );
+			}
+		});
 		
 		controler.setScoringFunctionFactory(new ScoringFunctionFactory() {
 
