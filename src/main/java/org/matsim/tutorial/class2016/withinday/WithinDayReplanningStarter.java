@@ -30,7 +30,7 @@ import org.matsim.contrib.otfvis.OTFVis;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup;import org.matsim.core.config.groups.QSimConfigGroup.VehiclesSource;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
@@ -69,6 +69,16 @@ public class WithinDayReplanningStarter {
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		// base the controler on that:
 		Controler ctrl = new Controler( config ) ;
+		final VehicleType car = new VehicleTypeImpl(Id.create("car", VehicleType.class));
+		car.setMaximumVelocity(60.0/3.6);
+		car.setPcuEquivalents(1.0);
+		
+		
+		final VehicleType bike = new VehicleTypeImpl(Id.create("bike", VehicleType.class));
+		bike.setMaximumVelocity(20.0/3.6);
+		bike.setPcuEquivalents(0.2);
+		
+		
 		ctrl.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
@@ -84,14 +94,15 @@ public class WithinDayReplanningStarter {
 
 						// add my own agent(s):
 						qsim.addAgentSource(new AgentSource() {
-							VehicleType basicVehicleType = new VehicleTypeImpl(Id.create("basicVehicleType", VehicleType.class));
-
 							@Override
 							public void insertAgentsIntoMobsim() {
 								final Id<Link> startLinkId = (Id<Link>) (sc.getNetwork().getLinks().keySet().toArray())[0];
-								final MobsimVehicle veh = new QVehicle(new VehicleImpl(Id.create("testVehicle", Vehicle.class), basicVehicleType));
-								qsim.addParkedVehicle(veh, startLinkId);
-								qsim.insertAgentIntoMobsim(new MyAgent(sc, ev, qsim, startLinkId, veh));
+								final MobsimVehicle veh1 = new QVehicle(new VehicleImpl(Id.create("testVehicle", Vehicle.class), car));
+								final MobsimVehicle bike1 = new QVehicle(new VehicleImpl(Id.create("testBike", Vehicle.class), bike));
+								qsim.addParkedVehicle(veh1, startLinkId);
+								qsim.addParkedVehicle(bike1, startLinkId);
+								qsim.insertAgentIntoMobsim(new MyAgent(sc, ev, qsim, startLinkId, veh1));
+								qsim.insertAgentIntoMobsim(new MyAgent(sc, ev, qsim, startLinkId, bike1));
 								// (the Id of the parked vehicle needs to be known to the agent, otherwise it will not work!)
 							}
 						});

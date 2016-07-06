@@ -55,7 +55,7 @@ public class MyAgent implements MobsimDriverAgent {
 	@Override
 	public Id<Person> getId() {
 		// TODO Auto-generated method stub
-		return Id.createPersonId("testPerson");
+		return Id.createPersonId("testPerson"+Math.random());
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class MyAgent implements MobsimDriverAgent {
 	@Override
 	public double getActivityEndTime() {
 		// TODO Auto-generated method stub
-		return 0;
+		return 1;
 	}
 
 	@Override
