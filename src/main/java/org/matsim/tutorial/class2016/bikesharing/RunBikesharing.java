@@ -19,11 +19,13 @@ public class RunBikesharing {
 		config.controler().setOverwriteFileSetting(OverwriteFileSetting.deleteDirectoryIfExists);
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Controler controler = new Controler(scenario);
+		final BikeSharingStations stations = new BikeSharingStations(scenario.getNetwork());
+		
 		controler.addOverridingModule(new AbstractModule() {
-			
 		
 			@Override
 			public void install() {
+				bind(BikeSharingStations.class).toInstance(stations);
 				this.install(new BikesharingQsimModule());
 			}
 		});

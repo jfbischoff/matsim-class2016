@@ -16,10 +16,12 @@ public class BikesharingAgentFactory implements AgentFactory {
 	//We need to determine: An agent going by car may become a "normal" DriverAgent, our bikesharers need to "become special" agents
 	
 	private final Netsim simulation;
-
+	private final BikeSharingStations stations;
 	@Inject
-	public BikesharingAgentFactory(final Netsim simulation) {
+	public BikesharingAgentFactory(final Netsim simulation, BikeSharingStations stations) {
 		this.simulation = simulation;
+		this.stations = stations;
+		
 	}
 	
 	@Override
