@@ -4,6 +4,8 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
+import org.matsim.api.core.v01.events.ActivityStartEvent;
+import org.matsim.api.core.v01.events.PersonArrivalEvent;
 import org.matsim.api.core.v01.events.PersonDepartureEvent;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.population.Activity;
@@ -16,6 +18,7 @@ import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.mobsim.framework.MobsimDriverAgent;
 import org.matsim.core.mobsim.qsim.QSim;
 import org.matsim.core.mobsim.qsim.interfaces.MobsimVehicle;
+import org.matsim.core.population.ActivityImpl;
 import org.matsim.core.population.LegImpl;
 import org.matsim.core.population.PopulationUtils;
 import org.matsim.core.population.routes.GenericRouteImpl;
@@ -39,6 +42,11 @@ public class BikeSharingAgent implements MobsimDriverAgent {
 	private PlanElement currentPlanElement; 
 	private int currentPlanElementIndex = 0;
 	private double currentExpectedArrivalTime ;
+	
+	private Leg currentLeg = null;
+	private Activity currentActivity = null;
+	
+	private BikesharingStation destinationStation;
 
 	
 	
@@ -50,7 +58,7 @@ public class BikeSharingAgent implements MobsimDriverAgent {
 		
 		this.plan = p.getSelectedPlan();
 		this.currentPlanElement = plan.getPlanElements().get(currentPlanElementIndex);
-		
+		this.currentActivity =   (Activity) plan.getPlanElements().get(currentPlanElementIndex);
 	}
 
 	@Override
@@ -61,9 +69,10 @@ public class BikeSharingAgent implements MobsimDriverAgent {
 
 	@Override
 	public double getActivityEndTime() {
-		if (currentPlanElement instanceof Activity){
-			return ((Activity) currentPlanElement).getEndTime();
+		if (currentActivity!=null){
+			return currentActivity.getEndTime();
 		}
+		
 		return 0;
 	}
 
@@ -89,13 +98,38 @@ public class BikeSharingAgent implements MobsimDriverAgent {
 			this.currentExpectedArrivalTime = walkLegToStation.getTravelTime()+now; 
 			nearestDepartureStation.rentABike();
 			this.currentBikesharingState = BikesharingState.WALKTOBIKE;
+			this.currentLeg = walkLegToStation;
+			this.currentActivity = null;
+			this.destinationStation = nearestArrivalStation;
 			
+		}
+		
+		if (this.currentBikesharingState.equals(BikesharingState.UNPARKBIKE)){
+			Coord fromCoord = qsim.getVisNetwork().getNetwork().getLinks().get(currentActivity.getLinkId()).getCoord();
+			Coord toCoord = qsim.getVisNetwork().getNetwork().getLinks().get(this.destinationStation.getLinkId()).getCoord();
+			Leg bikeLeg = createBikeLeg(fromCoord, currentActivity.getLinkId(), toCoord, this.destinationStation.getLinkId(), now, "bike");
+			this.currentLeg = bikeLeg;
+			this.currentActivity = null;
+			this.events.processEvent(new ActivityEndEvent(now, p.getId(), currentActivity.getLinkId(), null,currentActivity.getType()));
+			this.events.processEvent(new PersonDepartureEvent(now, p.getId(),currentActivity.getLinkId(), "bike"));
+			this.currentBikesharingState = BikesharingState.RIDE;
+			this.currentState = State.LEG;
 		}
 	}
 
 	@Override
 	public void endLegAndComputeNextState(double now) {
-		
+		if (this.currentBikesharingState.equals(BikesharingState.WALKTOBIKE)){
+			this.events.processEvent(new PersonArrivalEvent(now, p.getId(), this.currentLeg.getRoute().getEndLinkId(),TransportMode.access_walk));
+			
+			Activity act = new ActivityImpl("bike interaction", this.currentLeg.getRoute().getEndLinkId());
+			act.setEndTime(now+30);
+			this.currentActivity = act;
+			this.currentLeg = null;
+			this.currentState = State.ACTIVITY;
+			this.currentBikesharingState = BikesharingState.UNPARKBIKE;
+			this.events.processEvent(new ActivityStartEvent(now, p.getId(), act.getLinkId(), null, act.getType()));
+		}
 	}
 
 	@Override
@@ -198,6 +232,18 @@ public class BikeSharingAgent implements MobsimDriverAgent {
 		Leg leg = new LegImpl(walkMode);
 		double walkDistance = CoordUtils.calcEuclideanDistance(from,to)*1.3;
 		double walkTime = walkDistance / 1.11;
+		Route route = new GenericRouteImpl(fromLink, toLink);
+		route.setDistance(walkDistance);
+		route.setTravelTime(walkTime);
+		leg.setRoute(route);
+		leg.setDepartureTime(startTime);
+		return leg;
+	}
+	
+	private Leg createBikeLeg(Coord from, Id<Link> fromLink, Coord to, Id<Link> toLink, double startTime, String walkMode){
+		Leg leg = new LegImpl(walkMode);
+		double walkDistance = CoordUtils.calcEuclideanDistance(from,to)*1.3;
+		double walkTime = walkDistance / 4.5;
 		Route route = new GenericRouteImpl(fromLink, toLink);
 		route.setDistance(walkDistance);
 		route.setTravelTime(walkTime);
