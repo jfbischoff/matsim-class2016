@@ -7,6 +7,7 @@ import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.Plan;
 import org.matsim.api.core.v01.population.PlanElement;
 import org.matsim.core.mobsim.framework.MobsimAgent;
+import org.matsim.core.mobsim.qsim.QSim;
 import org.matsim.core.mobsim.qsim.agents.AgentFactory;
 import org.matsim.core.mobsim.qsim.agents.PersonDriverAgentImpl;
 import org.matsim.core.mobsim.qsim.interfaces.Netsim;
@@ -32,7 +33,8 @@ public class BikesharingAgentFactory implements AgentFactory {
 				Leg leg = (Leg) pe;
 				if (leg.getMode().equals("bike"))
 				{
-					createBikesharingAgent(p);
+					return new BikeSharingAgent((QSim) this.simulation, stations, p);
+					
 				}
 					
 			}
@@ -43,9 +45,6 @@ public class BikesharingAgentFactory implements AgentFactory {
 
 	}
 
-	private void createBikesharingAgent(Person p) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 
 }
